@@ -793,6 +793,39 @@ button:disabled {
   margin-bottom: 3px;
 }
 
+.gc-sidebar-chapter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+}
+
+.gc-sidebar-chapter-main {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 8px 0 8px 10px;
+}
+
+.gc-sidebar-delete {
+  width: 24px;
+  height: 24px;
+  color: var(--gc-danger);
+  border-color: transparent;
+  background: transparent;
+  opacity: 0;
+  margin: 0 4px 0 0;
+}
+
+.gc-sidebar-chapter:hover .gc-sidebar-delete,
+.gc-sidebar-delete:focus-visible {
+  opacity: 1;
+}
+
 .gc-sidebar-item.compact,
 .gc-sidebar-link,
 .gc-sidebar-admin {
@@ -938,6 +971,31 @@ button:disabled {
   cursor: pointer;
   white-space: nowrap;
   transition: color 0.12s, border-color 0.12s;
+}
+
+.gc-nav-tab-group {
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+}
+
+.gc-nav-tab-group .gc-nav-tab {
+  padding-right: 8px;
+}
+
+.gc-nav-delete {
+  width: 26px;
+  height: 100%;
+  color: var(--gc-danger);
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  margin: 0 8px 0 -4px;
+}
+
+.gc-nav-tab-group:hover .gc-nav-delete,
+.gc-nav-delete:focus-visible {
+  opacity: 1;
 }
 
 .gc-nav-tab:hover,
@@ -1173,6 +1231,19 @@ button:disabled {
 }
 
 .gc-comic-card:hover .gc-comic-thumb-upload {
+  opacity: 1;
+}
+
+.gc-comic-delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  opacity: 0;
+  background: rgba(22, 8, 8, 0.9);
+}
+
+.gc-comic-card:hover .gc-comic-delete,
+.gc-comic-delete:focus-visible {
   opacity: 1;
 }
 
@@ -1630,8 +1701,21 @@ button:disabled {
 
 .action-dots {
   color: var(--gc-muted);
-  font-size: calc(16px * var(--gc-type-scale));
-  letter-spacing: 1px;
+}
+
+.gc-row-delete {
+  width: 26px;
+  height: 26px;
+  color: var(--gc-danger);
+  border-color: transparent;
+  background: transparent;
+  opacity: 0;
+  margin: 0 auto;
+}
+
+.gc-tracker-table tr:hover .gc-row-delete,
+.gc-row-delete:focus-visible {
+  opacity: 1;
 }
 
 .gc-empty-cell {

@@ -36,6 +36,8 @@ const normalizeChapters = (chapters) => {
   }));
 };
 
+const confirmDelete = (message) => window.confirm(message);
+
 function ChapterModal({ comicName, onClose, onCreate }) {
   const [name, setName] = useState('');
 
@@ -305,6 +307,36 @@ export default function App() {
     });
   };
 
+  const deleteComic = (comic) => {
+    if (!confirmDelete(`Delete "${comic.name}" and all of its chapters and panels?`)) return;
+
+    const comicChapterIds = chapters
+      .filter((chapter) => chapter.comicId === comic.id)
+      .map((chapter) => chapter.id);
+
+    setComics((current) => current.filter((item) => item.id !== comic.id));
+    setChapters((current) => current.filter((chapter) => chapter.comicId !== comic.id));
+    setPanels((current) => current.filter((panel) => !comicChapterIds.includes(panel.chapterId)));
+
+    addActivity({
+      action: 'Comic deleted',
+      summary: `${user.name} deleted ${comic.name}.`,
+      detail: `${comicChapterIds.length} chapters and their panels were removed from the workspace.`,
+    });
+
+    const nextComic = comics.find((item) => item.id !== comic.id);
+    if (nextComic) {
+      const nextChapter = chapters.find((chapter) => chapter.comicId === nextComic.id);
+      setActiveComicId(nextComic.id);
+      if (nextChapter) setActiveChapterId(nextChapter.id);
+    } else {
+      setActiveComicId('');
+      setActiveChapterId('');
+    }
+
+    setScreen('stories');
+  };
+
   const updateComic = (updatedComic) => {
     setComics((current) => current.map((comic) => (
       comic.id === updatedComic.id ? updatedComic : comic
@@ -334,6 +366,32 @@ export default function App() {
     setScreen('dashboard');
   };
 
+  const deleteChapter = (chapter) => {
+    if (!confirmDelete(`Delete "${chapter.name}" and all panels in this chapter?`)) return;
+
+    const removedPanels = panels.filter((panel) => panel.chapterId === chapter.id);
+    const remainingChapters = chapters.filter((item) => item.id !== chapter.id);
+    const nextChapter = remainingChapters.find((item) => item.comicId === chapter.comicId);
+
+    setChapters(remainingChapters);
+    setPanels((current) => current.filter((panel) => panel.chapterId !== chapter.id));
+
+    addActivity({
+      action: 'Chapter deleted',
+      summary: `${user.name} deleted ${chapter.name}.`,
+      detail: `${removedPanels.length} panels were removed from ${activeComic?.name || 'the comic'}.`,
+    });
+
+    if (nextChapter) {
+      setActiveChapterId(nextChapter.id);
+      setScreen(screen === 'tracker' ? 'tracker' : 'dashboard');
+      return;
+    }
+
+    setActiveChapterId('');
+    setScreen('stories');
+  };
+
   const updatePanel = (updatedPanel) => {
     setPanels((current) => current.map((panel) => (
       panel.id === updatedPanel.id ? updatedPanel : panel
@@ -351,6 +409,17 @@ export default function App() {
       action: 'Panel created',
       summary: `${user.name} added ${panel.name}.`,
       detail: 'The panel was added to the tracker and is ready for assignment.',
+    });
+  };
+
+  const deletePanel = (panel) => {
+    if (!confirmDelete(`Delete panel "${panel.name}"?`)) return;
+
+    setPanels((current) => current.filter((item) => item.id !== panel.id));
+    addActivity({
+      action: 'Panel deleted',
+      summary: `${user.name} deleted ${panel.name}.`,
+      detail: 'The panel row was removed from the active chapter.',
     });
   };
 
@@ -437,6 +506,7 @@ export default function App() {
             chapters={chapters}
             onCreateComic={createComic}
             onUpdateComic={updateComic}
+            onDeleteComic={deleteComic}
             onOpenComic={openComic}
           />
         </div>
@@ -454,6 +524,7 @@ export default function App() {
             chapters={chapters}
             onCreateComic={createComic}
             onUpdateComic={updateComic}
+            onDeleteComic={deleteComic}
             onOpenComic={openComic}
           />
         </div>
@@ -473,6 +544,7 @@ export default function App() {
               setScreen('tracker');
             }}
             onAddChapter={() => setShowChapterModal(true)}
+            onDeleteChapter={deleteChapter}
             onBack={() => setScreen('dashboard')}
             user={user}
             onAdmin={() => navigate('admin')}
@@ -482,6 +554,7 @@ export default function App() {
             panels={panels}
             onUpdatePanel={updatePanel}
             onCreatePanel={createPanel}
+            onDeletePanel={deletePanel}
           />
         </>
       ) : (
@@ -496,6 +569,7 @@ export default function App() {
             onChapter={handleChapter}
             onNavigate={navigate}
             onAddChapter={() => setShowChapterModal(true)}
+            onDeleteChapter={deleteChapter}
           />
           <div className="gc-main-column">
             <AppTopBar screen={screen} user={user} onNavigate={navigate} onLogout={handleLogout} />

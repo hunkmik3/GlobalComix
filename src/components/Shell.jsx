@@ -7,6 +7,7 @@ import {
   Settings,
   Shield,
   Table2,
+  Trash2,
 } from 'lucide-react';
 import { Avatar, Button, IconButton } from './primitives.jsx';
 import { getChapterProgress } from '../lib/panels.js';
@@ -16,6 +17,7 @@ export function TrackerTopNav({
   activeChapterId,
   onChapter,
   onAddChapter,
+  onDeleteChapter,
   onBack,
   user,
   onAdmin,
@@ -26,14 +28,21 @@ export function TrackerTopNav({
       <div className="gc-topnav-divider" />
       <nav className="gc-chapter-tabs" aria-label="Chapters">
         {chapters.map((chapter) => (
-          <button
-            className={`gc-nav-tab ${chapter.id === activeChapterId ? 'active' : ''}`}
-            key={chapter.id}
-            type="button"
-            onClick={() => onChapter(chapter.id)}
-          >
-            {chapter.name}
-          </button>
+          <div className={`gc-nav-tab-group ${chapter.id === activeChapterId ? 'active' : ''}`} key={chapter.id}>
+            <button
+              className={`gc-nav-tab ${chapter.id === activeChapterId ? 'active' : ''}`}
+              type="button"
+              onClick={() => onChapter(chapter.id)}
+            >
+              {chapter.name}
+            </button>
+            <IconButton
+              icon={Trash2}
+              label={`Delete ${chapter.name}`}
+              className="gc-nav-delete"
+              onClick={() => onDeleteChapter(chapter)}
+            />
+          </div>
         ))}
         <IconButton icon={Plus} label="Add chapter" className="gc-add-tab" onClick={onAddChapter} />
       </nav>
@@ -59,6 +68,7 @@ export function Sidebar({
   onChapter,
   onNavigate,
   onAddChapter,
+  onDeleteChapter,
 }) {
   const navItems = [
     { label: 'Comics', screen: 'stories', icon: BookOpen },
@@ -80,20 +90,26 @@ export function Sidebar({
           const progress = getChapterProgress(chapterPanels);
 
           return (
-            <button
+            <div
               key={chapter.id}
-              className={`gc-sidebar-item ${chapter.id === activeChapterId ? 'active' : ''}`}
-              type="button"
-              onClick={() => onChapter(chapter.id)}
+              className={`gc-sidebar-item gc-sidebar-chapter ${chapter.id === activeChapterId ? 'active' : ''}`}
             >
-              <span className="gc-sidebar-item-row">
-                <span>{chapter.name}</span>
-                <span>{chapterPanels.length}</span>
-              </span>
-              <span className="gc-sidebar-progress">
-                <span style={{ width: `${progress.approvedPct}%` }} />
-              </span>
-            </button>
+              <button className="gc-sidebar-chapter-main" type="button" onClick={() => onChapter(chapter.id)}>
+                <span className="gc-sidebar-item-row">
+                  <span>{chapter.name}</span>
+                  <span>{chapterPanels.length}</span>
+                </span>
+                <span className="gc-sidebar-progress">
+                  <span style={{ width: `${progress.approvedPct}%` }} />
+                </span>
+              </button>
+              <IconButton
+                icon={Trash2}
+                label={`Delete ${chapter.name}`}
+                className="gc-sidebar-delete"
+                onClick={() => onDeleteChapter(chapter)}
+              />
+            </div>
           );
         })}
 

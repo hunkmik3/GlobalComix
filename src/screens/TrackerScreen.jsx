@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Download,
   ImageUp,
+  Trash2,
   Plus,
   Save,
   Search,
@@ -15,6 +16,7 @@ import {
   Field,
   ImageThumb,
   ImageZoomViewer,
+  IconButton,
   Modal,
   SelectInput,
   TextInput,
@@ -277,6 +279,7 @@ export default function TrackerScreen({
   panels,
   onUpdatePanel,
   onCreatePanel,
+  onDeletePanel,
 }) {
   const [selectedPanel, setSelectedPanel] = useState(null);
   const [showAddPanel, setShowAddPanel] = useState(false);
@@ -364,7 +367,7 @@ export default function TrackerScreen({
       <div className="gc-table-wrap">
         <table className="gc-tracker-table">
           <colgroup>
-            <col style={{ width: 44 }} />
+            <col style={{ width: 56 }} />
             <col style={{ width: 216 }} />
             <col style={{ width: 220 }} />
             <col style={{ width: 96 }} />
@@ -502,7 +505,17 @@ export default function TrackerScreen({
                   ) : <span className="dim">-</span>}
                 </td>
                 <td><Badge status={panel.video.status} /></td>
-                <td className="center action-dots">...</td>
+                <td className="center action-dots">
+                  <IconButton
+                    icon={Trash2}
+                    label={`Delete ${panel.name}`}
+                    className="gc-row-delete"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDeletePanel(panel);
+                    }}
+                  />
+                </td>
               </tr>
             ))}
             {pagePanels.length === 0 ? (

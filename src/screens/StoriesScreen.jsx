@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { BookOpen, Plus, Save } from 'lucide-react';
+import { BookOpen, Plus, Save, Trash2 } from 'lucide-react';
 import { Button, Field, TextInput, UploadSlot } from '../components/primitives.jsx';
 import { getAssetUrl, uploadImageAsset } from '../lib/assets.js';
 
@@ -13,6 +13,7 @@ export default function StoriesScreen({
   chapters,
   onCreateComic,
   onUpdateComic,
+  onDeleteComic,
   onOpenComic,
 }) {
   const [showForm, setShowForm] = useState(comics.length === 0);
@@ -158,6 +159,17 @@ export default function StoriesScreen({
                   />
                   Change thumbnail
                 </label>
+                <Button
+                  icon={Trash2}
+                  label="Delete comic"
+                  small
+                  danger
+                  className="gc-comic-delete"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDeleteComic(comic);
+                  }}
+                />
               </div>
               <div className="gc-comic-card-body">
                 <h2>{comic.name}</h2>
