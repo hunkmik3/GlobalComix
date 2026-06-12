@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GlobalComix – Wireframes</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#080808;}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+// ─────────────────────────────────────────────────────────────────────
+// TOKENS
+// ─────────────────────────────────────────────────────────────────────
+const T = {
+  bg:'#0a0a0a', surf:'#131313', card:'#1c1c1c',
+  border:'#252525', hi:'#353535',
+  text:'#c0c0c0', dim:'#555', muted:'#888',
+  accent:'#4a7fc1', accentLo:'#1a3660',
+  font:"'JetBrains Mono',monospace",
+};
+const SC = {
+  'Approved':   {bg:'#192e1f',bd:'#2a6a3a',tx:'#5aba7a'},
+  'Review':     {bg:'#2e2010',bd:'#7a5820',tx:'#d09828'},
+  'In Progress':{bg:'#0d1e3a',bd:'#1e4080',tx:'#4a88e0'},
+  'Rejected':   {bg:'#2e1010',bd:'#8a2020',tx:'#d04040'},
+  'Done':       {bg:'#1e1e1e',bd:'#3a3a3a',tx:'#7a7a7a'},
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// PRIMITIVES
+// ─────────────────────────────────────────────────────────────────────
+const Img = ({w,h,label=''}) => (
+  <div style={{width:w,height:h,flexShrink:0,borderRadius:2,
+    background:'repeating-linear-gradient(45deg,#181818 0,#181818 3px,#0d0d0d 3px,#0d0d0d 9px)',
+    border:`1px dashed ${T.hi}`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+    {label && <span style={{color:T.dim,fontSize:9,fontFamily:T.font,textAlign:'center',padding:2,lineHeight:1.3}}>{label}</span>}
+  </div>
+);
+const Badge = ({status}) => {
+  const s = SC[status]||SC['Done'];
+  return <span style={{padding:'1px 7px',borderRadius:3,background:s.bg,border:`1px solid ${s.bd}`,color:s.tx,fontSize:11,fontFamily:T.font,whiteSpace:'nowrap'}}>{status}</span>;
+};
+const Av = ({name='?',size=24}) => (
+  <div style={{width:size,height:size,borderRadius:'50%',flexShrink:0,background:T.accentLo,border:`1px solid ${T.hi}`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <span style={{color:T.accent,fontSize:size*0.44,fontFamily:T.font,fontWeight:700}}>{String(name)[0].toUpperCase()}</span>
+  </div>
+);
+const Btn = ({label,primary=false,small=false}) => (
+  <div style={{padding:small?'3px 8px':'5px 12px',borderRadius:4,cursor:'pointer',
+    background:primary?T.accent:T.card,border:`1px solid ${primary?T.accent:T.hi}`,
+    color:primary?'#fff':T.text,fontFamily:T.font,fontSize:small?11:13,
+    whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}>{label}</div>
+);
+const Inp = ({placeholder,w=160}) => (
+  <div style={{width:w,padding:'5px 10px',background:T.card,border:`1px solid ${T.hi}`,borderRadius:4,color:T.dim,fontFamily:T.font,fontSize:12}}>{placeholder}</div>
+);
+const Sel = ({value,w=120}) => (
+  <div style={{width:w,padding:'4px 8px',background:T.card,border:`1px solid ${T.hi}`,borderRadius:4,color:T.text,fontFamily:T.font,fontSize:12,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+    <span>{value}</span><span style={{color:T.dim,fontSize:10}}>▾</span>
+  </div>
+);
+const Lbl = ({children}) => (
+  <div style={{color:T.dim,fontFamily:T.font,fontSize:10,textTransform:'uppercase',letterSpacing:.5,marginBottom:4,marginTop:6}}>{children}</div>
+);
+
+// ─────────────────────────────────────────────────────────────────────
+// LAYOUT SHELLS
+// ─────────────────────────────────────────────────────────────────────
+const TopNav = ({chapters=[],right=null}) => (
+  <div style={{height:44,background:T.surf,borderBottom:`1px solid ${T.border}`,display:'flex',alignItems:'center',padding:'0 16px',gap:2,flexShrink:0}}>
+    <span style={{color:T.accent,fontFamily:T.font,fontSize:20,fontWeight:700,marginRight:8}}>GLOBALCOMIX</span>
+    {chapters.length>0 && <span style={{color:T.hi,margin:'0 6px'}}>│</span>}
+    {chapters.map((ch,i)=>(
+      <div key={i} style={{padding:'10px 12px',color:i===0?T.text:T.dim,fontFamily:T.font,fontSize:14,borderBottom:i===0?`2px solid ${T.accent}`:'2px solid transparent'}}>{ch}</div>
+    ))}
+    {chapters.length>0 && <div style={{padding:'10px 8px',color:T.accent,fontFamily:T.font,fontSize:14}}>+</div>}
+    <div style={{flex:1}}/>{right}<Av name="A" size={30}/>
+  </div>
+);
+
+const Sidebar = () => (
+  <div style={{width:200,background:T.surf,borderRight:`1px solid ${T.border}`,display:'flex',flexDirection:'column',flexShrink:0}}>
+    <div style={{padding:'13px 16px',borderBottom:`1px solid ${T.border}`}}>
+      <span style={{color:T.accent,fontFamily:T.font,fontSize:19,fontWeight:700}}>GLOBALCOMIX</span>
+    </div>
+    <div style={{padding:'8px 12px'}}>
+      <Lbl>Projects</Lbl>
+      {['Global Comix ★','Project Beta'].map((p,i)=>(
+        <div key={i} style={{padding:'5px 8px',marginTop:2,borderRadius:3,background:i===0?T.card:'transparent',borderLeft:`2px solid ${i===0?T.accent:'transparent'}`,color:i===0?T.text:T.dim,fontFamily:T.font,fontSize:13}}>{p}</div>
+      ))}
+    </div>
+    <div style={{padding:'4px 12px'}}>
+      <Lbl>Chapters</Lbl>
+      {['Chapter 1','Chapter 2','Chapter 3'].map((ch,i)=>(
+        <div key={i} style={{padding:'5px 8px',marginTop:2,borderRadius:3,background:i===0?T.card:'transparent',borderLeft:`2px solid ${i===0?T.accent:'transparent'}`,color:i===0?T.text:T.dim,fontFamily:T.font,fontSize:13,display:'flex',justifyContent:'space-between'}}>
+          <span>{ch}</span><span style={{color:T.dim,fontSize:10}}>{[42,38,24][i]}</span>
+        </div>
+      ))}
+      <div style={{padding:'5px 8px',marginTop:2,color:T.accent,fontFamily:T.font,fontSize:13}}>+ Add Chapter</div>
+    </div>
+    <div style={{flex:1}}/>
+    <div style={{padding:'10px 12px',borderTop:`1px solid ${T.border}`}}>
+      <div style={{display:'flex',alignItems:'center',gap:8}}><Av name="A" size={26}/>
+        <div><div style={{color:T.text,fontFamily:T.font,fontSize:12}}>Admin</div><div style={{color:T.dim,fontFamily:T.font,fontSize:10}}>administrator</div></div>
+      </div>
+      <div style={{marginTop:8,color:T.muted,fontFamily:T.font,fontSize:12}}>⚙ User Management</div>
+    </div>
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────
+// SCREEN 1 · Dashboard — Sidebar Layout
+// ─────────────────────────────────────────────────────────────────────
+const DashboardA = () => {
+  const stats = [{l:'Total',v:42,c:T.text},{l:'Approved',v:18,c:'#5aba7a'},{l:'In Progress',v:12,c:'#4a88e0'},{l:'Review',v:8,c:'#d09828'},{l:'Rejected',v:4,c:'#d04040'}];
+  return (
+    <div style={{width:'100%',height:'100%',background:T.bg,display:'flex',overflow:'hidden',fontFamily:T.font}}>
+      <Sidebar/>
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        <div style={{padding:'15px 24px 11px',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+          <div style={{color:T.text,fontSize:22,fontWeight:700}}>Chapter 1 <span style={{color:T.dim,fontWeight:400,fontSize:16}}>— 42 panels</span></div>
+          <div style={{color:T.dim,fontSize:13,marginTop:2}}>Global Comix · Updated 2h ago</div>
+        </div>
+        <div style={{display:'flex',gap:10,padding:'13px 24px',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+          {stats.map(s=>(
+            <div key={s.l} style={{flex:1,background:T.card,border:`1px solid ${T.hi}`,borderRadius:6,padding:'10px 14px'}}>
+              <div style={{color:s.c,fontSize:26,fontWeight:700}}>{s.v}</div>
+              <div style={{color:T.dim,fontSize:11,marginTop:1}}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{padding:'10px 24px',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+          <div style={{color:T.dim,fontSize:10,textTransform:'uppercase',marginBottom:5}}>Overall Progress</div>
+          <div style={{height:8,background:T.card,borderRadius:4,overflow:'hidden',display:'flex'}}>
+            <div style={{width:'43%',background:'#2a6a3a'}}/><div style={{width:'29%',background:'#1e4080'}}/>
+            <div style={{width:'19%',background:'#7a5820'}}/><div style={{width:'9%',background:'#8a2020'}}/>
+          </div>
+          <div style={{display:'flex',gap:16,marginTop:5}}>
+            {['Approved 43%','In Progress 29%','Review 19%','Rejected 9%'].map(l=>(
+              <span key={l} style={{color:T.dim,fontSize:10}}>{l}</span>
+            ))}
+          </div>
+        </div>
+        <div style={{padding:'12px 24px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <div style={{color:T.muted,fontSize:10,textTransform:'uppercase'}}>Recent Panels</div>
+            <Btn label="View All Panels →" small/>
+          </div>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+            {[['001','Approved'],['002','In Progress'],['003','Review'],['004','Rejected'],['005','In Progress'],['006','Review']].map(([n,s])=>(
+              <div key={n} style={{background:T.card,border:`1px solid ${T.hi}`,borderRadius:6,padding:8,width:112}}>
+                <Img w={96} h={62}/>
+                <div style={{color:T.text,fontSize:12,marginTop:5}}>PANEL{n}</div>
+                <div style={{marginTop:4}}><Badge status={s}/></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// SCREEN 2 · Dashboard — Chapter Cards
+// ─────────────────────────────────────────────────────────────────────
+const DashboardB = () => {
+  const chs = [
+    {name:'Chapter 1',total:42,app:18,prog:12,rev:8,rej:4},
+    {name:'Chapter 2',total:38,app:5,prog:20,rev:10,rej:3},
+    {name:'Chapter 3',total:24,app:0,prog:4,rev:18,rej:2},
+  ];
+  return (
+    <div style={{width:'100%',height:'100%',background:T.bg,display:'flex',flexDirection:'column',overflow:'hidden',fontFamily:T.font}}>
+      <TopNav/>
+      <div style={{background:T.surf,borderBottom:`1px solid ${T.border}`,padding:'12px 24px',display:'flex',gap:28,alignItems:'center',flexShrink:0}}>
+        {[{l:'Project',v:'Global Comix',c:T.accent},{l:'Total Panels',v:104,c:T.text},{l:'Approved',v:23,c:'#5aba7a'},{l:'In Progress',v:36,c:'#4a88e0'},{l:'Review',v:36,c:'#d09828'},{l:'Rejected',v:9,c:'#d04040'}].map(s=>(
+          <div key={s.l}><div style={{color:T.dim,fontSize:10,textTransform:'uppercase',letterSpacing:.4}}>{s.l}</div>
+            <div style={{color:s.c,fontFamily:T.font,fontSize:typeof s.v==='number'?20:15,fontWeight:700,marginTop:2}}>{s.v}</div>
+          </div>
+        ))}
+        <div style={{flex:1}}/><Btn label="+ New Chapter" primary/>
+      </div>
+      <div style={{flex:1,padding:'18px 24px',display:'flex',gap:14,overflow:'hidden'}}>
+        {chs.map(ch=>(
+          <div key={ch.name} style={{flex:1,background:T.card,border:`1px solid ${T.hi}`,borderRadius:8,padding:16,display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div><div style={{color:T.text,fontFamily:T.font,fontSize:18,fontWeight:700}}>{ch.name}</div>
+                <div style={{color:T.dim,fontSize:12,marginTop:2}}>{ch.total} panels</div></div>
+              <Btn label="Open →" small/>
+            </div>
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              {Array.from({length:6}).map((_,i)=><Img key={i} w={50} h={36}/>)}
+              <div style={{width:50,height:36,background:T.border,borderRadius:2,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <span style={{color:T.dim,fontFamily:T.font,fontSize:10}}>+{ch.total-6}</span>
+              </div>
+            </div>
+            <div style={{height:6,background:T.border,borderRadius:3,overflow:'hidden',display:'flex'}}>
+              <div style={{width:`${(ch.app/ch.total)*100}%`,background:'#2a6a3a'}}/>
+              <div style={{width:`${(ch.prog/ch.total)*100}%`,background:'#1e4080'}}/>
+              <div style={{width:`${(ch.rev/ch.total)*100}%`,background:'#7a5820'}}/>
+              <div style={{width:`${(ch.rej/ch.total)*100}%`,background:'#8a2020'}}/>
+            </div>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              {[['Approved',ch.app],['In Progress',ch.prog],['Review',ch.rev]].map(([s,n])=>(
+                <div key={s} style={{display:'flex',alignItems:'center',gap:4}}><Badge status={s}/><span style={{color:T.muted,fontSize:11}}>{n}</span></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// SCREEN 3 · Panel Tracker — Dense Table  ★ Core
+// ─────────────────────────────────────────────────────────────────────
+const TrackerTable = () => {
+  const rows = [
+    {s:'001',n:'MAGMEL_CHAP1_PANEL001',sfa:'Sora P',sfs:'Approved',  va:'Min H',  vs:'In Progress'},
+    {s:'002',n:'MAGMEL_CHAP1_PANEL002',sfa:'Sora P',sfs:'Approved',  va:'Min H',  vs:'Review'},
+    {s:'003',n:'MAGMEL_CHAP1_PANEL003',sfa:'Dae J', sfs:'In Progress',va:'Min H',  vs:'Review'},
+    {s:'004',n:'MAGMEL_CHAP1_PANEL004',sfa:'Dae J', sfs:'Review',    va:'—',      vs:'Review'},
+    {s:'005',n:'MAGMEL_CHAP1_PANEL005',sfa:'Ji W',  sfs:'Rejected',  va:'—',      vs:'Review'},
+    {s:'006',n:'MAGMEL_CHAP1_PANEL006',sfa:'Ji W',  sfs:'Review',    va:'—',      vs:'Review'},
+  ];
+  const th={color:T.muted,fontFamily:T.font,fontSize:11,padding:'5px 8px',textAlign:'left',borderBottom:`1px solid ${T.hi}`,background:T.surf,whiteSpace:'nowrap'};
+  const gh={background:'#141e2e',color:T.accent,fontFamily:T.font,fontSize:11,padding:'4px 8px',textAlign:'center',borderBottom:`1px solid ${T.hi}`,letterSpacing:.5};
+  const td={color:T.text,fontFamily:T.font,fontSize:12,padding:'5px 7px',borderBottom:`1px solid ${T.border}`,verticalAlign:'middle'};
+  return (
+    <div style={{width:'100%',height:'100%',background:T.bg,display:'flex',flexDirection:'column',overflow:'hidden',fontFamily:T.font}}>
+      <TopNav chapters={['Chapter 1','Chapter 2','Chapter 3']} right={<Inp placeholder="🔍 Search panel..." w={152}/>}/>
+      <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:`1px solid ${T.border}`,background:T.surf,flexShrink:0}}>
+        <span style={{color:T.text,fontFamily:T.font,fontSize:15,fontWeight:700}}>Chapter 1</span>
+        <span style={{color:T.dim,fontSize:13}}>— 42 panels</span>
+        <div style={{flex:1}}/>
+        <Sel value="All Status" w={100}/><Sel value="All Artists" w={100}/>
+        <Btn label="↓ Export"/><Btn label="+ Add Panel" primary/>
+      </div>
+      <div style={{flex:1,overflow:'auto',padding:'0 12px 12px'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',marginTop:10}}>
+          <colgroup>
+            <col style={{width:42}}/><col style={{width:192}}/><col style={{width:66}}/>
+            <col style={{width:88}}/><col style={{width:66}}/><col style={{width:66}}/><col style={{width:92}}/>
+            <col style={{width:88}}/><col style={{width:66}}/><col style={{width:66}}/><col style={{width:92}}/>
+            <col style={{width:44}}/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th rowSpan={2} style={th}>STT</th>
+              <th rowSpan={2} style={th}>Panel Name</th>
+              <th rowSpan={2} style={th}>Origin</th>
+              <th colSpan={4} style={gh}>STYLE FRAME</th>
+              <th colSpan={4} style={gh}>VIDEO</th>
+              <th rowSpan={2} style={th}></th>
+            </tr>
+            <tr>
+              {['Assigned','Old','New','Status','Assigned','Old','New','Status'].map((h,i)=>(
+                <th key={i} style={th}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={r.s} style={{background:i%2===0?T.bg:'#0f0f0f',cursor:'pointer'}}>
+                <td style={{...td,color:T.dim}}>{r.s}</td>
+                <td style={{...td,color:T.accent,fontSize:11,letterSpacing:.2}}>{r.n}</td>
+                <td style={td}><Img w={50} h={34}/></td>
+                <td style={td}><div style={{display:'flex',alignItems:'center',gap:4}}><Av name={r.sfa} size={18}/><span style={{fontSize:11,color:T.muted}}>{r.sfa}</span></div></td>
+                <td style={td}><Img w={50} h={34}/></td>
+                <td style={td}><Img w={50} h={34}/></td>
+                <td style={td}><Badge status={r.sfs}/></td>
+                <td style={td}>{r.va!=='—'?<div style={{display:'flex',alignItems:'center',gap:4}}><Av name={r.va} size={18}/><span style={{fontSize:11,color:T.muted}}>{r.va}</span></div>:<span style={{color:T.dim}}>—</span>}</td>
+                <td style={td}>{r.va!=='—'?<Img w={50} h={34}/>:<span style={{color:T.dim}}>—</span>}</td>
+                <td style={td}>{r.va!=='—'?<Img w={50} h={34}/>:<span style={{color:T.dim}}>—</span>}</td>
+                <td style={td}><Badge status={r.vs}/></td>
+                <td style={{...td,color:T.dim,textAlign:'center',fontSize:16}}>···</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:8,marginTop:10}}>
+          <span style={{color:T.dim,fontFamily:T.font,fontSize:12}}>1–6 of 42</span>
+          <Btn label="← Prev" small/><Btn label="Next →" small/>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// SCREEN 4 · Panel Tracker — Card Grid
+// ─────────────────────────────────────────────────────────────────────
+const TrackerCards = () => {
+  const panels=[
+    {n:'PANEL001',sf:'Approved',vid:'In Progress',a:'Sora P'},
+    {n:'PANEL002',sf:'Approved',vid:'Review',a:'Sora P'},
+    {n:'PANEL003',sf:'In Progress',vid:'Review',a:'Dae J'},
+    {n:'PANEL004',sf:'Review',vid:'Review',a:'Dae J'},
+    {n:'PANEL005',sf:'Rejected',vid:'Review',a:'Ji W'},
+    {n:'PANEL006',sf:'Review',vid:'Review',a:'Ji W'},
+    {n:'PANEL007',sf:'Done',vid:'Done',a:'Sora P'},
+    {n:'PANEL008',sf:'In Progress',vid:'Review',a:'Min H'},
+  ];
+  return (
+    <div style={{width:'100%',height:'100%',background:T.bg,display:'flex',flexDirection:'column',overflow:'hidden',fontFamily:T.font}}>
+      <TopNav chapters={['Chapter 1','Chapter 2','Chapter 3']}/>
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+        <div style={{width:172,background:T.surf,borderRight:`1px solid ${T.border}`,padding:'12px',flexShrink:0,display:'flex',flexDirection:'column',gap:14}}>
+          <div><Lbl>Status</Lbl>
+            {['All','Approved','In Progress','Review','Rejected','Done'].map((s,i)=>(
+              <div key={s} style={{padding:'4px 8px',marginTop:2,borderRadius:3,background:i===0?T.card:'transparent',borderLeft:`2px solid ${i===0?T.accent:'transparent'}`,color:i===0?T.text:T.dim,fontFamily:T.font,fontSize:13,display:'flex',justifyContent:'space-between'}}>
+                <span>{s}</span>{i>0&&<span style={{fontSize:10,color:T.dim}}>{[18,12,8,4,2][i-1]}</span>}
+              </div>
+            ))}
+          </div>
+          <div><Lbl>Artist</Lbl>
+            {['Sora P','Dae J','Ji W','Min H'].map(a=>(
+              <div key={a} style={{padding:'4px 8px',marginTop:2,color:T.dim,fontFamily:T.font,fontSize:13,display:'flex',alignItems:'center',gap:6}}><Av name={a} size={16}/>{a}</div>
+            ))}
+          </div>
+          <div><Lbl>View Mode</Lbl>
+            {['⊞ Cards','⊟ Table','⊠ Kanban'].map((v,i)=>(
+              <div key={v} style={{padding:'4px 8px',marginTop:2,borderRadius:3,background:i===0?T.card:'transparent',borderLeft:`2px solid ${i===0?T.accent:'transparent'}`,color:i===0?T.text:T.dim,fontFamily:T.font,fontSize:13}}>{v}</div>
+            ))}
+          </div>
+        </div>
+        <div style={{flex:1,padding:'14px',overflow:'auto'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <span style={{color:T.text,fontFamily:T.font,fontSize:15,fontWeight:700}}>Chapter 1 <span style={{color:T.dim,fontWeight:400}}>42 panels</span></span>
+            <div style={{display:'flex',gap:8}}><Inp placeholder="🔍 Search..." w={130}/><Btn label="+ Add Panel" primary/></div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+            {panels.map(p=>(
+              <div key={p.n} style={{background:T.card,border:`1px solid ${T.hi}`,borderRadius:6,padding:9,cursor:'pointer'}}>
+                <div style={{width:'100%',height:70,background:'repeating-linear-gradient(45deg,#181818 0,#181818 3px,#0d0d0d 3px,#0d0d0d 9px)',border:`1px dashed ${T.hi}`,borderRadius:2}}></div>
+                <div style={{color:T.accent,fontFamily:T.font,fontSize:11,marginTop:6,letterSpacing:.3}}>{p.n}</div>
+                <div style={{display:'flex',alignItems:'center',gap:4,marginTop:3}}><Av name={p.a} size={14}/><span style={{color:T.dim,fontFamily:T.font,fontSize:10}}>{p.a}</span></div>
+                <div style={{display:'flex',gap:3,marginTop:5,flexWrap:'wrap',alignItems:'center'}}>
+                  <span style={{color:T.dim,fontFamily:T.font,fontSize:9}}>SF</span><Badge status={p.sf}/>
+                  <span style={{color:T.dim,fontFamily:T.font,fontSize:9,marginLeft:2}}>VID</span><Badge status={p.vid}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// SCREEN 5 · Panel Tracker — Kanban Board
+// ─────────────────────────────────────────────────────────────────────
+const TrackerKanban = () => {
+  const cols=[
+    {s:'Review',    items:[['PANEL004','Dae J'],['PANEL006','Ji W'],['PANEL009','Sora P'],['PANEL012','Min H']]},
+    {s:'In Progress',items:[['PANEL003','Dae J'],['PANEL008','Min H'],['PANEL011','Ji W']]},
+    {s:'Approved',  items:[['PANEL001','Sora P'],['PANEL002','Sora P'],['PANEL007','Min H']]},
+    {s:'Rejected',  items:[['PANEL005','Ji W']]},
+    {s:'Done',      items:[['PANEL010','Dae J'],['PANEL013','Sora P']]},
+  ];
+  return (
+    <div style={{width:'100%',height:'100%',background:T.bg,display:'flex',flexDirection:'column',overflow:'hidden',fontFamily:T.font}}>
+      <TopNav chapters={['Chapter 1','Chapter 2','Chapter 3']}/>
+      <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:`1px solid ${T.border}`,background:T.surf,flexShrink:0}}>
+        <span style={{color:T.text,fontFamily:T.font,fontSize:15,fontWeight:700}}>Chapter 1 — Kanban</span>
+        <div style={{flex:1}}/><Btn label="⊟ Table"/><Btn label="⊞ Cards"/><Btn label="+ Add Panel" primary/>
+      </div>
+      <div style={{flex:1,overflow:'auto',padding:'14px 16px',display:'flex',gap:10}}>
+        {cols.map(col=>{
+          const sc=SC[col.s]||SC['Done'];
+          return (
+            <div key={col.s} style={{width:208,flexShrink:0,display:'flex',flexDirection:'column',gap:7}}>
+              <div style={{display:'flex',alignItems:'center',gap:6,padding:'5px 10px',background:sc.bg,borderRadius:4,border:`1px solid ${sc.bd}`}}>
+                <span style={{color:sc.tx,fontFamily:T.font,fontSize:13,fontWeight:700}}>{col.s}</span>
+                <span style={{marginLeft:'auto',color:sc.tx,background:`${sc.bd}55`,padding:'0 5px',borderRadius:3,fontSize:11,fontFamily:T.font}}>{col.items.length}</span>
+              </div>
+              {col.items.map(([panel,artist])=>(
+                <div key={panel} style={{background:T.card,border:`1px solid ${T.hi}`,borderRadius:5,padding:8,cursor:'grab'}}>
+                  <div style={{width:'100%',height:48,background:'repeating-linear-gradient(45deg,#181818 0,#181818 3px,#0d0d0d 3px,#0d0d0d 9px)',borderRadius:2,marginBottom:6,border:`1px dashed ${T.hi}`}}></div>
+                  <div style={{color:T.accent,fontFamily:T.font,fontSize:11}}>{panel}</div>
+                  <div style={{display:'flex',alignItems:'center',gap:4,marginTop:4}}><Av name={artist} size={16}/><span style={{color:T.dim,fontFamily:T.font,fontSize:10}}>{artist}</span></div>
+                </div>
+              ))}
+              <div style={{padding:'5px 8px',color:T.dim,fontFamily:T.font,fontSize:12,textAlign:'center',border:`1px dashed ${T.hi}`,borderRadius:4,cursor:'pointer'}}>+ Add card</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// SCREEN 6 · Panel Detail Modal
+// ─────────────────────────────────────────────────────────────────────
+const PanelModal = () => {
+  const UpSlot=({hasImg,label})=>(
+    <div style={{width:134,height:98,flexShrink:0,borderRadius:4,cursor:'pointer',
+      background:hasImg?'repeating-linear-gradient(45deg,#181818 0,#181818 3px,#0d0d0d 3px,#0d0d0d 9px)':T.surf,
+      border:`1.5px dashed ${hasImg?T.hi:T.accentLo}`,
+      display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4}}>
+      {!hasImg&&<span style={{color:T.accentLo,fontSize:26,lineHeight:1}}>+</span>}
+      <span style={{color:hasImg?T.dim:T.muted,fontFamily:T.font,fontSize:10,textAlign:'center',padding:'0 6px'}}>{label}</span>
+    </div>
+  );
+  const Sec=({title,assigned,hasOld,hasNew,status})=>(
+    <div style={{border:`1px solid ${T.hi}`,borderRadius:6,padding:'11px',background:T.bg}}>
+      <div style={{color:T.accent,fontFamily:T.font,fontSize:14,fontWeight:700,marginBottom:9}}>{title}</div>
+      <div style={{display:'flex',gap:10,alignItems:'flex-end',marginBottom:10}}>
+        <div style={{flex:1}}><div style={{color:T.dim,fontFamily:T.font,fontSize:10,textTransform:'uppercase',marginBottom:3}}>Assigned To</div><Sel value={assigned} w="100%"/></div>
+        <div><div style={{color:T.dim,fontFamily:T.font,fontSize:10,textTransform:'uppercase',marginBottom:3}}>Status</div><Sel value={status} w={112}/></div>
+      </div>
+      <div style={{display:'flex',gap:10}}>
+        <div><div style={{color:T.dim,fontFamily:T.font,fontSize:10,textTransform:'uppercase',marginBottom:3}}>Old Version</div><UpSlot hasImg={hasOld} label={hasOld?'v1_orig.jpg':'Upload image'}/></div>
+        <div><div style={{color:T.dim,fontFamily:T.font,fontSize:10,textTransform:'uppercase',marginBottom:3}}>New Version</div><UpSlot hasImg={hasNew} label={hasNew?'v2_new.jpg':'Drop or click'}/></div>
+      </div>
+    </div>
+  );
+  return (
+    <div style={{width:'100%',height:'100%',background:'rgba(0,0,0,0.8)',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',fontFamily:T.font}}>
+      <div style={{width:860,background:T.card,border:`1px solid ${T.hi}`,borderRadius:10,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12,padding:'11px 18px',borderBottom:`1px solid ${T.border}`,background:T.surf}}>
+          <div>
+            <div style={{color:T.accent,fontFamily:T.font,fontSize:17,fontWeight:700}}>MAGMEL_CHAP1_PANEL003</div>
+            <div style={{color:T.dim,fontFamily:T.font,fontSize:11,marginTop:1}}>Chapter 1 · Panel #003</div>
+          </div>
+          <div style={{flex:1}}/><Badge status="In Progress"/>
+          <div style={{color:T.dim,fontSize:16,cursor:'pointer',padding:'0 4px',marginLeft:8}}>✕</div>
+        </div>
+        <div style={{display:'flex',gap:18,padding:'14px 18px'}}>
+          <div style={{flexShrink:0,width:200}}>
+            <div style={{color:T.dim,fontFamily:T.font,fontSize:10,textTransform:'uppercase',marginBottom:5}}>Origin Comic</div>
+            <Img w={200} h={274} label="origin comic reference"/>
+            <div style={{marginTop:8}}><Btn label="↺ Replace" small/></div>
+          </div>
+          <div style={{flex:1,display:'flex',flexDirection:'column',gap:10,minWidth:0}}>
+            <Sec title="Style Frame" assigned="Dae Jun" hasOld={true} hasNew={false} status="In Progress"/>
+            <Sec title="Video" assigned="Min Ho" hasOld={false} hasNew={false} status="Review"/>
+          </div>
+        </div>
+        <div style={{display:'flex',justifyContent:'flex-end',gap:8,padding:'9px 18px',borderTop:`1px solid ${T.border}`,background:T.surf}}>
+          <Btn label="Cancel"/><Btn label="💾  Save Changes" primary/>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// SCREEN 7 · Admin — User Management
+// ─────────────────────────────────────────────────────────────────────
+const AdminUsers = () => {
+  const users=[
+    {id:1,name:'Admin User',user:'admin',     role:'ADMIN',   active:true},
+    {id:2,name:'Park Sora', user:'sora.p',    role:'ARTIST',  active:true},
+    {id:3,name:'Dae Jun',   user:'dae.j',     role:'ARTIST',  active:true},
+    {id:4,name:'Ji Won',    user:'ji.w',       role:'REVIEWER',active:true},
+    {id:5,name:'Min Ho',    user:'min.h',      role:'ARTIST',  active:true},
+    {id:6,name:'Yu Na',     user:'yu.n',       role:'REVIEWER',active:false},
+  ];
+  const rc={ADMIN:'#4a7fc1',ARTIST:'#3d7a50',REVIEWER:'#9a6030'};
+  const th={color:T.muted,fontFamily:T.font,fontSize:11,padding:'8px 12px',textAlign:'left',borderBottom:`1px solid ${T.hi}`,background:T.surf};
+  const td={color:T.text,fontFamily:T.font,fontSize:13,padding:'7px 12px',borderBottom:`1px solid ${T.border}`};
+  return (
+    <div style={{width:'100%',height:'100%',background:T.bg,display:'flex',flexDirection:'column',overflow:'hidden',fontFamily:T.font}}>
+      <div style={{height:44,background:T.surf,borderBottom:`1px solid ${T.border}`,display:'flex',alignItems:'center',padding:'0 16px',gap:2,flexShrink:0}}>
+        <span style={{color:T.accent,fontFamily:T.font,fontSize:20,fontWeight:700}}>GLOBALCOMIX</span>
+        <span style={{color:T.hi,margin:'0 8px'}}>│</span>
+        <div style={{padding:'10px 12px',color:T.dim,fontFamily:T.font,fontSize:14}}>Dashboard</div>
+        <div style={{padding:'10px 12px',color:T.text,fontFamily:T.font,fontSize:14,borderBottom:`2px solid ${T.accent}`}}>Admin</div>
+        <div style={{flex:1}}/><Av name="A" size={30}/>
+      </div>
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+        <Sidebar/>
+        <div style={{flex:1,padding:'22px 28px',overflow:'auto'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:18}}>
+            <div>
+              <div style={{color:T.text,fontFamily:T.font,fontSize:22,fontWeight:700}}>User Management</div>
+              <div style={{color:T.dim,fontSize:13,marginTop:2}}>{users.length} accounts · JWT auth · local SQLite</div>
+            </div>
+            <Btn label="+ Add User" primary/>
+          </div>
+          <div style={{background:T.card,border:`1px solid ${T.hi}`,borderRadius:8,overflow:'hidden',marginBottom:20}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead><tr>{['#','Display Name','Username','Role','Status','Joined','Actions'].map(h=><th key={h} style={th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {users.map((u,i)=>(
+                  <tr key={u.id} style={{background:i%2===0?T.card:T.bg}}>
+                    <td style={{...td,color:T.dim}}>{u.id}</td>
+                    <td style={td}><div style={{display:'flex',alignItems:'center',gap:8}}><Av name={u.name} size={26}/>{u.name}</div></td>
+                    <td style={{...td,color:T.muted}}>{u.user}</td>
+                    <td style={td}><span style={{padding:'2px 8px',borderRadius:3,background:`${rc[u.role]}1a`,border:`1px solid ${rc[u.role]}`,color:rc[u.role],fontSize:10,fontFamily:T.font}}>{u.role}</span></td>
+                    <td style={td}><span style={{color:u.active?'#5aba7a':T.dim,fontSize:12}}>{u.active?'● Active':'○ Inactive'}</span></td>
+                    <td style={{...td,color:T.dim}}>2025-0{i+1}</td>
+                    <td style={td}><div style={{display:'flex',gap:5}}><Btn label="Edit" small/>{u.role!=='ADMIN'&&<Btn label="Disable" small/>}</div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{background:T.card,border:`1.5px dashed ${T.accentLo}`,borderRadius:8,padding:16,maxWidth:380}}>
+            <div style={{color:T.accent,fontFamily:T.font,fontSize:14,fontWeight:700,marginBottom:12}}>+ New User</div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              {[['Display Name','Full name…'],['Username','login_handle'],['Password','••••••••']].map(([l,p])=>(
+                <div key={l}><div style={{color:T.dim,fontFamily:T.font,fontSize:10,textTransform:'uppercase',marginBottom:3}}>{l}</div><Inp placeholder={p} w="100%"/></div>
+              ))}
+              <div><div style={{color:T.dim,fontFamily:T.font,fontSize:10,textTransform:'uppercase',marginBottom:3}}>Role</div><Sel value="ARTIST" w="100%"/></div>
+              <div style={{display:'flex',gap:8,marginTop:4}}><Btn label="Cancel"/><Btn label="Create User" primary/></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// APP
+// ─────────────────────────────────────────────────────────────────────
+const { DesignCanvas, DCSection, DCArtboard } = window;
+
+const App = () => (
+  <DesignCanvas>
+    <DCSection id="dashboard" title="Dashboard / Chapter Selector" subtitle="How users land and choose a chapter">
+      <DCArtboard id="dash-a" label="Option A — Sidebar + Chapter Nav" width={1280} height={830}>
+        <DashboardA/>
+      </DCArtboard>
+      <DCArtboard id="dash-b" label="Option B — Chapter Cards Overview" width={1280} height={700}>
+        <DashboardB/>
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="tracker" title="Panel Tracker" subtitle="Core screen — the production table. Three view modes proposed.">
+      <DCArtboard id="tracker-a" label="A — Dense Table  ★ Recommended" width={1440} height={760}>
+        <TrackerTable/>
+      </DCArtboard>
+      <DCArtboard id="tracker-b" label="B — Card Grid" width={1440} height={780}>
+        <TrackerCards/>
+      </DCArtboard>
+      <DCArtboard id="tracker-c" label="C — Kanban Board" width={1440} height={720}>
+        <TrackerKanban/>
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="modal" title="Panel Detail Modal" subtitle="Click any row → opens this overlay">
+      <DCArtboard id="modal-detail" label="Panel Detail — upload, assign, set status" width={1280} height={680}>
+        <PanelModal/>
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="admin" title="Admin — User Management" subtitle="Admin-only; accessible from sidebar footer">
+      <DCArtboard id="admin-users" label="User Management + Add User form" width={1280} height={870}>
+        <AdminUsers/>
+      </DCArtboard>
+    </DCSection>
+  </DesignCanvas>
+);
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

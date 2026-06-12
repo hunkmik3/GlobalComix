@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlobalComix</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html, body, #root { width:100%; height:100%; overflow:hidden; }
+  body { background:#090909; font-family:'JetBrains Mono', monospace; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:#2a2a2a; border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:#3a3a3a; }
+
+  /* Table rows */
+  .gc-row { transition:background .1s; }
+  .gc-row:hover { background:#181818 !important; }
+
+  /* Buttons */
+  .gc-btn { transition:filter .15s, box-shadow .15s; }
+  .gc-btn:hover { filter:brightness(1.15); }
+  .gc-btn-primary:hover { box-shadow:0 0 14px rgba(77,142,232,.35); }
+  .gc-btn:active { filter:brightness(.9); }
+
+  /* Nav tabs */
+  .gc-nav-tab { cursor:pointer; transition:color .12s; }
+  .gc-nav-tab:hover { color:#e2e2e2 !important; }
+
+  /* Sidebar items */
+  .gc-sidebar-item { transition:background .1s, border-color .1s; }
+  .gc-sidebar-item:hover { background:rgba(255,255,255,.04) !important; }
+  .gc-sidebar-active { }
+
+  /* Inputs */
+  .gc-input, .gc-select {
+    background:#161616;
+    border:1px solid #2c2c2c;
+    color:#e2e2e2;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    padding:7px 10px;
+    border-radius:4px;
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .gc-input:focus, .gc-select:focus {
+    border-color:#4d8ee8;
+    box-shadow:0 0 0 3px rgba(77,142,232,.1);
+  }
+  .gc-input::placeholder { color:#3a3a3a; }
+  .gc-select {
+    appearance:none;
+    -webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 10px center;
+    padding-right:28px;
+    cursor:pointer;
+  }
+  .gc-select option { background:#161616; color:#e2e2e2; }
+
+  /* Upload slot hover */
+  .gc-upslot { transition:border-color .15s, background .15s; }
+  .gc-upslot:hover { border-color:#4d8ee8 !important; background:#0f2040 !important; }
+
+  /* Modal backdrop */
+  .gc-modal-backdrop { backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+
+  /* Screen fade */
+  @keyframes gc-fade-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  .gc-screen-fade { animation:gc-fade-in .2s ease-out; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="gc-components.jsx"></script>
+<script type="text/babel" src="gc-tracker.jsx"></script>
+<script type="text/babel" src="gc-screens.jsx"></script>
+<script type="text/babel" src="gc-main.jsx"></script>
+</body>
+</html>
