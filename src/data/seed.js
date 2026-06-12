@@ -1,7 +1,5 @@
 export const STATUS_VALUES = ['Review', 'In Progress', 'Approved', 'Rejected', 'Done'];
 
-export const ARTISTS = ['Sora P', 'Dae J', 'Ji W', 'Min H', 'Ji Won', 'Yu Na'];
-
 export const ROLE_VALUES = ['ARTIST', 'REVIEWER', 'ADMIN'];
 
 export const DEFAULT_COMIC_ID = 'comic-1';
@@ -53,14 +51,7 @@ export const ROLE_COLORS = {
   REVIEWER: '#fbbf24',
 };
 
-export const initialUsers = [
-  { id: 'usr-1', name: 'Admin User', username: 'admin', password: 'admin', role: 'ADMIN', active: true, joined: '2025-01' },
-  { id: 'usr-2', name: 'Park Sora', username: 'sora.p', password: 'demo', role: 'ARTIST', active: true, joined: '2025-02' },
-  { id: 'usr-3', name: 'Dae Jun', username: 'dae.j', password: 'demo', role: 'ARTIST', active: true, joined: '2025-03' },
-  { id: 'usr-4', name: 'Ji Won', username: 'ji.w', password: 'demo', role: 'REVIEWER', active: true, joined: '2025-04' },
-  { id: 'usr-5', name: 'Min Ho', username: 'min.h', password: 'demo', role: 'ARTIST', active: true, joined: '2025-05' },
-  { id: 'usr-6', name: 'Yu Na', username: 'yu.n', password: 'demo', role: 'REVIEWER', active: false, joined: '2025-06' },
-];
+export const initialUsers = [];
 
 export const initialComics = [
   {
@@ -80,34 +71,14 @@ export const initialChapters = [
 export const initialActivityLogs = [
   {
     id: 'log-1',
-    actorName: 'Admin User',
-    actorRole: 'ADMIN',
+    actorName: 'System',
+    actorRole: 'SYSTEM',
     action: 'Workspace prepared',
-    summary: 'Admin User prepared the GlobalComix production workspace.',
-    detail: 'Initial chapters, panel tracking, and demo accounts are ready.',
+    summary: 'The GlobalComix production workspace was prepared.',
+    detail: 'Create real accounts in Admin, then assign panels from the tracker.',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
   },
-  {
-    id: 'log-2',
-    actorName: 'Park Sora',
-    actorRole: 'ARTIST',
-    action: 'Panel updated',
-    summary: 'Park Sora moved MAGMEL_CHAP1_PANEL001 forward in production.',
-    detail: 'Style Frame was marked Approved and is ready for video work.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: 'log-3',
-    actorName: 'Ji Won',
-    actorRole: 'REVIEWER',
-    action: 'Review requested',
-    summary: 'Ji Won requested another look at MAGMEL_CHAP1_PANEL005.',
-    detail: 'The panel needs a small revision before approval.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-  },
 ];
-
-const artistCycle = ['Sora P', 'Dae J', 'Ji W', 'Min H'];
 
 const statusForIndex = (index, counts) => {
   const approvedEnd = counts.approved;
@@ -122,8 +93,6 @@ const statusForIndex = (index, counts) => {
 
 const buildPanel = (chapterId, chapterNumber, index, aggregateStatus) => {
   const stt = String(index).padStart(3, '0');
-  const styleArtist = artistCycle[(index - 1) % artistCycle.length];
-  const videoArtist = aggregateStatus === 'Review' && index % 3 === 1 ? null : artistCycle[(index + 1) % artistCycle.length];
 
   const stageByAggregate = {
     Approved: {
@@ -169,16 +138,16 @@ const buildPanel = (chapterId, chapterNumber, index, aggregateStatus) => {
     name: `MAGMEL_CHAP${chapterNumber}_PANEL${stt}`,
     originImage: null,
     styleFrame: {
-      assignedTo: styleArtist,
+      assignedTo: '',
       status: stage.sf,
       oldImage: stage.sfOld ? 'placeholder' : null,
       newImage: stage.sfNew ? 'placeholder' : null,
     },
     video: {
-      assignedTo: videoArtist,
+      assignedTo: '',
       status: stage.vid,
-      oldImage: videoArtist && stage.vidOld ? 'placeholder' : null,
-      newImage: videoArtist && stage.vidNew ? 'placeholder' : null,
+      oldImage: stage.vidOld ? 'placeholder' : null,
+      newImage: stage.vidNew ? 'placeholder' : null,
     },
     updatedAt: Date.now() - index * 3600000,
   };

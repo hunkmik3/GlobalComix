@@ -22,7 +22,7 @@ import {
   TextInput,
   UploadSlot,
 } from '../components/primitives.jsx';
-import { ARTISTS, STATUS_VALUES } from '../data/seed.js';
+import { STATUS_VALUES } from '../data/seed.js';
 import { isPreviewableAsset, uploadImageAsset } from '../lib/assets.js';
 import { exportPanelsToCsv, makeNewPanel } from '../lib/panels.js';
 
@@ -33,7 +33,7 @@ const TABLE_ORIGIN_IMAGE = { w: 172, h: 218 };
 
 const emptyAddDraft = {
   name: '',
-  sfAssigned: 'Sora P',
+  sfAssigned: '',
   sfStatus: 'Review',
   sfOldImage: null,
   sfNewImage: null,
@@ -53,7 +53,7 @@ const trackerImageSize = (image, kind = 'stage') => {
   return kind === 'origin' ? TABLE_ORIGIN_IMAGE : TABLE_IMAGE;
 };
 
-function StageSelects({ title, stage, onPatch, onPreview, onUploadFile }) {
+function StageSelects({ title, stage, assignees, onPatch, onPreview, onUploadFile }) {
   return (
     <section className="gc-stage-form">
       <h3>{title}</h3>
@@ -61,7 +61,7 @@ function StageSelects({ title, stage, onPatch, onPreview, onUploadFile }) {
         <Field label="Assigned To">
           <SelectInput value={stage.assignedTo || ''} onChange={(event) => onPatch({ assignedTo: event.target.value })}>
             <option value="">Unassigned</option>
-            {ARTISTS.map((artist) => <option key={artist} value={artist}>{artist}</option>)}
+            {assignees.map((assignee) => <option key={assignee.id} value={assignee.name}>{assignee.name}</option>)}
           </SelectInput>
         </Field>
         <Field label="Status" className="gc-stage-status">
@@ -94,7 +94,7 @@ function StageSelects({ title, stage, onPatch, onPreview, onUploadFile }) {
   );
 }
 
-function PanelDetailModal({ panel, chapter, onClose, onSave, onPreview }) {
+function PanelDetailModal({ panel, chapter, assignees, onClose, onSave, onPreview }) {
   const [draft, setDraft] = useState(() => JSON.parse(JSON.stringify(panel)));
 
   const patchStage = (stageName, patch) => {
@@ -157,6 +157,7 @@ function PanelDetailModal({ panel, chapter, onClose, onSave, onPreview }) {
           <StageSelects
             title="Style Frame"
             stage={draft.styleFrame}
+            assignees={assignees}
             onPatch={(patch) => patchStage('styleFrame', patch)}
             onUploadFile={(file, version) => uploadImageAsset({
               file,
@@ -171,6 +172,7 @@ function PanelDetailModal({ panel, chapter, onClose, onSave, onPreview }) {
           <StageSelects
             title="Video"
             stage={draft.video}
+            assignees={assignees}
             onPatch={(patch) => patchStage('video', patch)}
             onUploadFile={(file, version) => uploadImageAsset({
               file,
@@ -188,7 +190,7 @@ function PanelDetailModal({ panel, chapter, onClose, onSave, onPreview }) {
   );
 }
 
-function AddPanelModal({ chapter, chapterPanels, onClose, onCreate, onPreview }) {
+function AddPanelModal({ chapter, chapterPanels, assignees, onClose, onCreate, onPreview }) {
   const [draft, setDraft] = useState(emptyAddDraft);
   const nextStt = String(chapterPanels.length + 1).padStart(3, '0');
   const defaultPanelName = `MAGMEL_${chapter.name.replace(/\s+/g, '').toUpperCase()}_PANEL${nextStt}`;
@@ -245,7 +247,7 @@ function AddPanelModal({ chapter, chapterPanels, onClose, onCreate, onPreview })
             <Field label="Assigned To">
               <SelectInput value={draft.sfAssigned} onChange={(event) => patch({ sfAssigned: event.target.value })}>
                 <option value="">Unassigned</option>
-                {ARTISTS.map((artist) => <option key={artist} value={artist}>{artist}</option>)}
+                {assignees.map((assignee) => <option key={assignee.id} value={assignee.name}>{assignee.name}</option>)}
               </SelectInput>
             </Field>
             <Field label="Status">
@@ -259,7 +261,7 @@ function AddPanelModal({ chapter, chapterPanels, onClose, onCreate, onPreview })
             <Field label="Assigned To">
               <SelectInput value={draft.vidAssigned} onChange={(event) => patch({ vidAssigned: event.target.value })}>
                 <option value="">Unassigned</option>
-                {ARTISTS.map((artist) => <option key={artist} value={artist}>{artist}</option>)}
+                {assignees.map((assignee) => <option key={assignee.id} value={assignee.name}>{assignee.name}</option>)}
               </SelectInput>
             </Field>
             <Field label="Status">
@@ -277,6 +279,7 @@ function AddPanelModal({ chapter, chapterPanels, onClose, onCreate, onPreview })
 export default function TrackerScreen({
   chapter,
   panels,
+  assignees = [],
   onUpdatePanel,
   onCreatePanel,
   onDeletePanel,
@@ -320,6 +323,13 @@ export default function TrackerScreen({
     if (page > pageCount) setPage(pageCount);
   }, [page, pageCount]);
 
+  useEffect(() => {
+    if (artistFilter === 'All') return;
+    if (!assignees.some((assignee) => assignee.name === artistFilter)) {
+      setArtistFilter('All');
+    }
+  }, [artistFilter, assignees]);
+
   const openPreview = (image, title) => {
     if (!isPreviewableAsset(image) || image === 'placeholder') return;
     setPreviewImage({ image, title });
@@ -358,7 +368,7 @@ export default function TrackerScreen({
         </SelectInput>
         <SelectInput value={artistFilter} onChange={(event) => setArtistFilter(event.target.value)}>
           <option value="All">All Artists</option>
-          {ARTISTS.map((artist) => <option key={artist} value={artist}>{artist}</option>)}
+          {assignees.map((assignee) => <option key={assignee.id} value={assignee.name}>{assignee.name}</option>)}
         </SelectInput>
         <Button icon={Download} label="Export" onClick={() => exportPanelsToCsv(chapter, filtered)} />
         <Button icon={Plus} label="Panel" primary onClick={() => setShowAddPanel(true)} />
@@ -540,6 +550,7 @@ export default function TrackerScreen({
         <PanelDetailModal
           panel={selectedPanel}
           chapter={chapter}
+          assignees={assignees}
           onClose={() => setSelectedPanel(null)}
           onSave={(updated) => {
             onUpdatePanel(updated);
@@ -553,6 +564,7 @@ export default function TrackerScreen({
         <AddPanelModal
           chapter={chapter}
           chapterPanels={chapterPanels}
+          assignees={assignees}
           onClose={() => setShowAddPanel(false)}
           onCreate={onCreatePanel}
           onPreview={openPreview}

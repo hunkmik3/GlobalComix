@@ -2,14 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Save } from 'lucide-react';
 import { AppTopBar, Sidebar, TrackerTopNav } from './components/Shell.jsx';
 import { Button, Field, Modal, TextInput } from './components/primitives.jsx';
-import {
-  DEFAULT_COMIC_ID,
-  initialActivityLogs,
-  initialChapters,
-  initialComics,
-  initialPanels,
-  initialUsers,
-} from './data/seed.js';
+import { initialActivityLogs } from './data/seed.js';
 import { saveState, loadState } from './lib/storage.js';
 import {
   createAdminUser,
@@ -18,25 +11,34 @@ import {
   signInWithEmail,
   signOutFromSupabase,
 } from './lib/supabase.js';
-import { refreshComicAssetUrls, refreshPanelAssetUrls } from './lib/assets.js';
+import {
+  loadWorkspace,
+  createComic as dbCreateComic,
+  updateComic as dbUpdateComic,
+  deleteComic as dbDeleteComic,
+  createChapter as dbCreateChapter,
+  deleteChapter as dbDeleteChapter,
+  createPanel as dbCreatePanel,
+  updatePanel as dbUpdatePanel,
+  deletePanel as dbDeletePanel,
+} from './lib/db.js';
 import AdminScreen from './screens/AdminScreen.jsx';
 import DashboardScreen from './screens/DashboardScreen.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
 import StoriesScreen from './screens/StoriesScreen.jsx';
 import TrackerScreen from './screens/TrackerScreen.jsx';
 
-const normalizeComics = (comics) => {
-  return comics.length > 0 ? comics : initialComics;
-};
-
-const normalizeChapters = (chapters) => {
-  return chapters.map((chapter) => ({
-    ...chapter,
-    comicId: chapter.comicId || DEFAULT_COMIC_ID,
-  }));
-};
-
 const confirmDelete = (message) => window.confirm(message);
+
+const deriveAssignees = (accounts) => accounts
+  .filter((account) => account.active !== false && account.role !== 'ADMIN')
+  .map((account) => ({
+    id: account.id,
+    name: account.name || account.username || account.email,
+    role: account.role,
+  }))
+  .filter((account) => account.name)
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 function ChapterModal({ comicName, onClose, onCreate }) {
   const [name, setName] = useState('');
@@ -75,13 +77,14 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [activeComicId, setActiveComicId] = useState(DEFAULT_COMIC_ID);
-  const [activeChapterId, setActiveChapterId] = useState('chap-1');
+  const [activeComicId, setActiveComicId] = useState('');
+  const [activeChapterId, setActiveChapterId] = useState('');
   const [showChapterModal, setShowChapterModal] = useState(false);
-  const [comics, setComics] = useState(() => normalizeComics(loadState('comics', initialComics)));
-  const [chapters, setChapters] = useState(() => normalizeChapters(loadState('chapters', initialChapters)));
-  const [panels, setPanels] = useState(() => loadState('panels', initialPanels));
-  const [users, setUsers] = useState(() => loadState('users', initialUsers));
+  const [workspaceReady, setWorkspaceReady] = useState(false);
+  const [comics, setComics] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [panels, setPanels] = useState([]);
+  const [users, setUsers] = useState([]);
   const [activityLogs, setActivityLogs] = useState(() => loadState('activityLogs', initialActivityLogs));
 
   useEffect(() => {
@@ -111,44 +114,45 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user?.role !== 'ADMIN') return;
+    if (!user) {
+      setUsers([]);
+      setComics([]);
+      setChapters([]);
+      setPanels([]);
+      setWorkspaceReady(false);
+      return;
+    }
 
     let active = true;
+    setWorkspaceReady(false);
 
-    fetchProfiles()
-      .then((profiles) => {
-        if (active && profiles.length > 0) setUsers(profiles);
-      })
-      .catch(() => {
-        // Keep local fallback data if RLS blocks profile listing for now.
-      });
+    const loadEverything = async () => {
+      let loadedAssignees = [];
 
-    return () => {
-      active = false;
-    };
-  }, [user?.role]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    let active = true;
-
-    const refreshAssets = async () => {
       try {
-        const [nextComics, nextPanels] = await Promise.all([
-          Promise.all(comics.map((comic) => refreshComicAssetUrls(comic))),
-          Promise.all(panels.map((panel) => refreshPanelAssetUrls(panel))),
-        ]);
-
+        const profiles = await fetchProfiles();
         if (!active) return;
-        setComics(nextComics);
-        setPanels(nextPanels);
-      } catch {
-        // Keep existing signed URLs; individual uploads will still refresh when replaced.
+        setUsers(profiles);
+        loadedAssignees = deriveAssignees(profiles);
+      } catch (error) {
+        if (active) setUsers([]);
+        console.error('Failed to load profiles', error);
       }
+
+      try {
+        const workspace = await loadWorkspace(loadedAssignees);
+        if (!active) return;
+        setComics(workspace.comics);
+        setChapters(workspace.chapters);
+        setPanels(workspace.panels);
+      } catch (error) {
+        console.error('Failed to load workspace', error);
+      }
+
+      if (active) setWorkspaceReady(true);
     };
 
-    refreshAssets();
+    loadEverything();
 
     return () => {
       active = false;
@@ -163,14 +167,12 @@ export default function App() {
     return chapters.filter((chapter) => chapter.comicId === activeComic?.id);
   }, [activeComic?.id, chapters]);
 
+  const assignees = useMemo(() => deriveAssignees(users), [users]);
+
   const activeChapter = useMemo(() => {
     return activeComicChapters.find((chapter) => chapter.id === activeChapterId) || activeComicChapters[0];
   }, [activeChapterId, activeComicChapters]);
 
-  useEffect(() => saveState('comics', comics), [comics]);
-  useEffect(() => saveState('chapters', chapters), [chapters]);
-  useEffect(() => saveState('panels', panels), [panels]);
-  useEffect(() => saveState('users', users), [users]);
   useEffect(() => saveState('activityLogs', activityLogs), [activityLogs]);
 
   useEffect(() => {
@@ -262,7 +264,7 @@ export default function App() {
     setScreen('dashboard');
   };
 
-  const openComic = (comicId) => {
+  const openComic = async (comicId) => {
     const comicChapters = chapters.filter((chapter) => chapter.comicId === comicId);
     setActiveComicId(comicId);
 
@@ -272,47 +274,60 @@ export default function App() {
       return;
     }
 
-    const chapterId = `chap-${Date.now()}`;
-    setChapters((current) => [
-      ...current,
-      {
-        id: chapterId,
-        comicId,
-        name: 'Chapter 1',
-        updatedAt: 'Just created',
-      },
-    ]);
-    setActiveChapterId(chapterId);
-    setScreen('dashboard');
+    try {
+      const { id } = await dbCreateChapter({ comicId, name: 'Chapter 1', sortOrder: 0 });
+      setChapters((current) => [
+        ...current,
+        { id, comicId, name: 'Chapter 1', sortOrder: 0, updatedAt: 'Just created' },
+      ]);
+      setActiveChapterId(id);
+      setScreen('dashboard');
+    } catch (error) {
+      window.alert(`Could not open comic: ${error.message}`);
+    }
   };
 
-  const createComic = (comic) => {
-    const chapterId = `chap-${Date.now()}`;
-    setComics((current) => [...current, comic]);
-    setChapters((current) => [
-      ...current,
-      {
-        id: chapterId,
-        comicId: comic.id,
-        name: 'Chapter 1',
-        updatedAt: 'Just created',
-      },
-    ]);
-    setActiveComicId(comic.id);
-    setActiveChapterId(chapterId);
-    addActivity({
-      action: 'Comic created',
-      summary: `${user.name} created ${comic.name}.`,
-      detail: 'A starter Chapter 1 was prepared for panel tracking.',
-    });
+  const createComic = async (comic) => {
+    try {
+      const { comicId, chapterId } = await dbCreateComic({
+        name: comic.name,
+        thumbnailAssetId: comic.thumbnail?.assetId || null,
+        createdBy: user.id,
+      });
+
+      setComics((current) => [
+        ...current,
+        { id: comicId, name: comic.name, thumbnail: comic.thumbnail || null, updatedAt: 'Just created' },
+      ]);
+      setChapters((current) => [
+        ...current,
+        { id: chapterId, comicId, name: 'Chapter 1', sortOrder: 0, updatedAt: 'Just created' },
+      ]);
+      setActiveComicId(comicId);
+      setActiveChapterId(chapterId);
+      addActivity({
+        action: 'Comic created',
+        summary: `${user.name} created ${comic.name}.`,
+        detail: 'A starter Chapter 1 was prepared for panel tracking.',
+      });
+    } catch (error) {
+      window.alert(`Could not create comic: ${error.message}`);
+    }
   };
 
-  const deleteComic = (comic) => {
+  const deleteComic = async (comic) => {
     if (!confirmDelete(`Delete "${comic.name}" and all of its chapters and panels?`)) return;
 
     const comicChapterIds = chapters
       .filter((chapter) => chapter.comicId === comic.id)
       .map((chapter) => chapter.id);
+
+    try {
+      await dbDeleteComic(comic.id);
+    } catch (error) {
+      window.alert(`Could not delete comic: ${error.message}`);
+      return;
+    }
 
     setComics((current) => current.filter((item) => item.id !== comic.id));
     setChapters((current) => current.filter((chapter) => chapter.comicId !== comic.id));
@@ -337,7 +352,18 @@ export default function App() {
     setScreen('stories');
   };
 
-  const updateComic = (updatedComic) => {
+  const updateComic = async (updatedComic) => {
+    try {
+      await dbUpdateComic({
+        id: updatedComic.id,
+        name: updatedComic.name,
+        thumbnailAssetId: updatedComic.thumbnail?.assetId ?? null,
+      });
+    } catch (error) {
+      window.alert(`Could not update comic: ${error.message}`);
+      return;
+    }
+
     setComics((current) => current.map((comic) => (
       comic.id === updatedComic.id ? updatedComic : comic
     )));
@@ -348,15 +374,21 @@ export default function App() {
     });
   };
 
-  const createChapter = (name) => {
-    const id = `chap-${Date.now()}`;
-    const nextChapter = {
-      id,
-      comicId: activeComic.id,
-      name,
-      updatedAt: 'Just created',
-    };
-    setChapters((current) => [...current, nextChapter]);
+  const createChapter = async (name) => {
+    const sortOrder = activeComicChapters.length;
+
+    let id;
+    try {
+      ({ id } = await dbCreateChapter({ comicId: activeComic.id, name, sortOrder }));
+    } catch (error) {
+      window.alert(`Could not create chapter: ${error.message}`);
+      return;
+    }
+
+    setChapters((current) => [
+      ...current,
+      { id, comicId: activeComic.id, name, sortOrder, updatedAt: 'Just created' },
+    ]);
     addActivity({
       action: 'Chapter created',
       summary: `${user.name} created ${name} for ${activeComic.name}.`,
@@ -366,8 +398,15 @@ export default function App() {
     setScreen('dashboard');
   };
 
-  const deleteChapter = (chapter) => {
+  const deleteChapter = async (chapter) => {
     if (!confirmDelete(`Delete "${chapter.name}" and all panels in this chapter?`)) return;
+
+    try {
+      await dbDeleteChapter(chapter.id);
+    } catch (error) {
+      window.alert(`Could not delete chapter: ${error.message}`);
+      return;
+    }
 
     const removedPanels = panels.filter((panel) => panel.chapterId === chapter.id);
     const remainingChapters = chapters.filter((item) => item.id !== chapter.id);
@@ -392,10 +431,18 @@ export default function App() {
     setScreen('stories');
   };
 
-  const updatePanel = (updatedPanel) => {
+  const updatePanel = async (updatedPanel) => {
     setPanels((current) => current.map((panel) => (
       panel.id === updatedPanel.id ? updatedPanel : panel
     )));
+
+    try {
+      await dbUpdatePanel(updatedPanel, assignees);
+    } catch (error) {
+      window.alert(`Could not save panel: ${error.message}`);
+      return;
+    }
+
     addActivity({
       action: 'Panel updated',
       summary: `${user.name} updated ${updatedPanel.name}.`,
@@ -403,8 +450,16 @@ export default function App() {
     });
   };
 
-  const createPanel = (panel) => {
-    setPanels((current) => [...current, panel]);
+  const createPanel = async (panel) => {
+    let id;
+    try {
+      ({ id } = await dbCreatePanel(panel, assignees));
+    } catch (error) {
+      window.alert(`Could not create panel: ${error.message}`);
+      return;
+    }
+
+    setPanels((current) => [...current, { ...panel, id }]);
     addActivity({
       action: 'Panel created',
       summary: `${user.name} added ${panel.name}.`,
@@ -412,8 +467,15 @@ export default function App() {
     });
   };
 
-  const deletePanel = (panel) => {
+  const deletePanel = async (panel) => {
     if (!confirmDelete(`Delete panel "${panel.name}"?`)) return;
+
+    try {
+      await dbDeletePanel(panel.id);
+    } catch (error) {
+      window.alert(`Could not delete panel: ${error.message}`);
+      return;
+    }
 
     setPanels((current) => current.filter((item) => item.id !== panel.id));
     addActivity({
@@ -493,6 +555,20 @@ export default function App() {
     return <LoginScreen onLogin={handleLogin} initialError={authError} />;
   }
 
+  if (!workspaceReady) {
+    return (
+      <main className="gc-login">
+        <section className="gc-login-card">
+          <div className="gc-login-head">
+            <h1>GLOBALCOMIX</h1>
+            <p>Loading workspace...</p>
+            <div />
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const safeComic = activeComic || comics[0];
   const safeChapter = activeChapter || activeComicChapters[0];
 
@@ -552,6 +628,7 @@ export default function App() {
           <TrackerScreen
             chapter={safeChapter}
             panels={panels}
+            assignees={assignees}
             onUpdatePanel={updatePanel}
             onCreatePanel={createPanel}
             onDeletePanel={deletePanel}

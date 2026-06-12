@@ -79,6 +79,7 @@ Before relying on account creation or R2 uploads in production, deploy the Supab
 
 ```sh
 npx supabase functions deploy admin-create-user --project-ref your-project-ref
+npx supabase functions deploy list-profiles --project-ref your-project-ref
 npx supabase functions deploy resolve-login --project-ref your-project-ref
 npx supabase functions deploy upload-asset --project-ref your-project-ref
 npx supabase functions deploy create-r2-upload-url --project-ref your-project-ref

@@ -21,7 +21,7 @@ const resolveLoginEmail = async (identifier) => {
 };
 
 export const toAppUser = (profile, authUser = {}) => {
-  const createdAt = profile?.created_at || authUser?.created_at || new Date().toISOString();
+  const createdAt = profile?.joined_at || profile?.created_at || authUser?.created_at || new Date().toISOString();
 
   return {
     id: profile?.id || authUser?.id,
@@ -80,10 +80,10 @@ export const signOutFromSupabase = () => supabase.auth.signOut();
 export const fetchProfiles = async () => {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, display_name, username, role, active, joined_at')
     .order('display_name', { ascending: true });
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   return (data || []).map((profile) => toAppUser(profile));
 };
 
